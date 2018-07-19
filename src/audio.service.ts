@@ -1,5 +1,4 @@
 import {
-  AsyncSubject,
   BehaviorSubject,
   fromEvent,
   Observable,
@@ -45,12 +44,12 @@ export class AudioService {
       "progress",
       "error"
     ];    
-    const sharableSubjects = {
-      src$: new ReplaySubject<string>(1), // Hold the source of the currently playing track
-      playing$: new BehaviorSubject<boolean>(false), // Holds state of player if audio is playing or not
-      currentTime$: new BehaviorSubject<number>(0) // Gives the current playback time in seconds
+    const playerMetaData = {
+      src: '', // Hold the source of the currently playing track
+      playing: false, // Holds state of player if audio is playing or not
+      currentTime: 0 // Gives the current playback time in seconds
     };
-    const communicationSubjects = {
+    const subjects = {
       play$: new Subject(), // custom event to start playing audio
       pause$: new Subject(), // custom event to pasue playing audio
       stop$: new Subject(), // custom event to stop playing audio
@@ -77,20 +76,20 @@ export class AudioService {
 
       mediaEventSubscriptions.timeupdateSubscription = 
         mediaEvents.timeupdate$.subscribe(() => {
-          sharableSubjects.currentTime$.next(this.audio.currentTime);
-          observer.next(sharableSubjects);
+          playerMetaData.currentTime = this.audio.currentTime;
+          observer.next(playerMetaData);
         });
 
       mediaEventSubscriptions.canplaySubscription = 
         mediaEvents.canplay$.subscribe(() => this.audio.play());
       
       this.audio.src = src;
-      sharableSubjects.src$.next("src");
+      playerMetaData.src = src;
 
       // observer.next(sharableSubjects);
 
       return () => {
-        console.log('removing!');
+        log('removing!');
         this.audio.pause();
         this.audio.src = '';
         removeEventListeners();
@@ -107,16 +106,18 @@ export class AudioService {
   }
 }
 
-function addItem(val:any) {
+function log(val: any) {
   var node = document.createElement("li");
   var textnode = document.createTextNode(val);
   node.appendChild(textnode);
   document.getElementById("output").appendChild(node);
+  window.scrollTo(0, document.body.scrollHeight);
 }
 
 const sound = new AudioService();
-sound.play('http://www.hipstrumentals.com/wp-content/uploads/2014/10/Eve-Ft.-Gwen-Stefani-Let-Me-Blow-Ya-Mind-Instrumental-Prod.-By-Swizz-Beatz.mp3').subscribe((data: any) => {
-  addItem(data.currentTime$.getValue());
+const audioURL = 'http://www.hipstrumentals.com/wp-content/uploads/2014/10/Eve-Ft.-Gwen-Stefani-Let-Me-Blow-Ya-Mind-Instrumental-Prod.-By-Swizz-Beatz.mp3';
+sound.play(audioURL).subscribe((data: any) => {
+  log(data.currentTime);
 });
 
 setTimeout(function () {
